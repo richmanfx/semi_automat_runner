@@ -3,6 +3,8 @@ from os import system, path
 from sys import platform
 from configparser import ConfigParser
 import xml.etree.cElementTree as ET
+from pytz import timezone
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
@@ -18,13 +20,12 @@ def clear_console():
 
 # Считывает и возвращает информацию из конфигурационных файлов
 def configs_read(ini_config_name):
-
     if not path.isfile(ini_config_name):
         print('INI-файл ' + ini_config_name + ' не существует.')
         exit(1)
 
     config_ini = ConfigParser()
-    config_ini.read(ini_config_name, "utf-8-sig")   # sig - для BOM-символов в начале UTF-8 файла
+    config_ini.read(ini_config_name, "utf-8-sig")  # sig - для BOM-символов в начале UTF-8 файла
 
     return config_ini
 
@@ -85,9 +86,9 @@ def get_webdriver(ini_config, ini_config_name):
         exit(1)
     print(u'Используется браузер: ' + ini_config['browser']['browser_name'])
     # Размеры окна браузера
-    driver = set_browser_size(driver, ini_config)
+    driver2 = set_browser_size(driver, ini_config)
 
-    return driver
+    return driver2
 
 
 # Установка размера окна браузера
@@ -107,9 +108,57 @@ def set_browser_size(driver, ini_config):
 # Получает элемент из словаря с деревьями XML-файлов и текстовое содержание тега NAME
 # Возвращает текстовое содержание соответствующего тега VALUE
 def get_xml_value(xml_file, name_value):
-    root = xml_file.getroot()               # Корневой элемент XML
+    value = ''
+    root = xml_file.getroot()  # Корневой элемент XML
     for parameter in root.findall('PARAMETERS'):
         name = parameter.find('NAME').text
         if name == name_value:
             value = parameter.find('VALUE').text
     return value
+
+
+# Проверяет доступность сайта и, если недоступен, выходит из программы.
+# Параметр driver Экземпляр WebDriver-а
+# Возвращает boolean
+def site_available(driver, part_string):
+    site_title = driver.title
+    try:
+        site_title.index(part_string)
+    except ValueError:
+        status = False
+    else:
+        status = True
+    return status
+
+
+# Обработка символа в консоли
+# Считывает символ с консоли, при 'q', 'Q', 'й', 'Й' - выход из приложения,
+#     * при n, N, т, Т - ничего не делаем, при других символах - снова считываем
+def input_symbol():
+    print(u"Введи 'q' и 'Enter' - для выхода или введи 'n' 'Enter' для продолжения,: ")
+    status = ''
+    input_string = ''
+
+    while input_string != 'q' and input_string != 'Q' and input_string != 'й' and input_string != 'Й' \
+            and input_string != 'n' and input_string != 'N' and input_string != 'т' and input_string != 'Т':
+
+        input_string = raw_input()
+
+        if input_string == 'q' or input_string == 'Q' or input_string == 'й' or input_string == 'Й':
+            status = 'exit'
+        elif input_string == 'n' or input_string == 'N' or input_string == 'т' or input_string == 'Т':
+            status = 'next'
+        else:
+            print('Не то ввёл: ' + input_string)
+
+    return status
+
+
+def console_input():
+    if input_symbol() == 'exit':
+        print ('Bye-bye!')
+        exit(2)
+
+
+def current_time():
+    return timezone('Europe/Moscow').fromutc(datetime.utcnow()).strftime("%Y-%m-%d %H:%M:%S %Z")

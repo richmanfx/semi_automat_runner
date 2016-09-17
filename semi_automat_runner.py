@@ -1,9 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from time import sleep
+# from __future__ import absolute_import
+# from __future__ import division
+# from __future__ import print_function
+# from __future__ import unicode_literals
 
 import functions
-import datetime
 
 VERSION = '1.0.0'
 __author__ = 'Aleksandr Jashhuk, Zoer, R5AM, www.r5am.ru'
@@ -23,26 +25,39 @@ def main():
     # print(xml_tree_dict['online_settings'].getroot())
 
     # Тип сервера - Продакшн или Тестовый
-    server_role = functions.get_server_role(ini_config, ini_config_name)
-    print('Используется ' + server_role + '-сервер.')
-    print('Начало работы: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    print('Используется ' + functions.get_server_role(ini_config, ini_config_name) + '-сервер.')
+
+    print('Начало работы: ' + functions.current_time())
 
     # Получаем webdriver с браузером, указанным в INI-файле
     driver = functions.get_webdriver(ini_config, ini_config_name)
 
     # Выставить время до ожидания вебэлемента
-    print(u'Время ожидания элементов (implicitly_wait), сукунд: ' +
-          ini_config['general']['implicitly_wait'])
+    print(u'Время ожидания элементов (implicitly_wait): ' +
+          ini_config['general']['implicitly_wait'] + u' секунд.')
     driver.implicitly_wait(ini_config['general']['implicitly_wait'])
 
     # Открываем страницу
     link = functions.get_xml_value(xml_tree_dict['test_script'], 'serviceDirectLink')
-    print(u'Открываем страницу: ' + link)
+    domain_name = link.split("//")[1].split("/")[0]
+
+    print(u'Открываем страницу: ' + domain_name)
     driver.get(link)
 
-    sleep(10)
-    print('Конец работы:  ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    driver.close()
+    # Доступен ли сайт
+    print(u'Определяем доступность сайта: ' + domain_name)
+    status = functions.site_available(driver, u'муниципальные услуги')
+    if status:
+        print('Сайт ' + domain_name + ' доступен.')
+    else:
+        print('Сайт ' + domain_name + ' недоступен.')
+        driver.quit()
+        exit(1)
+
+    functions.console_input()       # Дальше?
+
+    print('Конец работы:  ' + functions.current_time())
+    driver.quit()
 
 
 if __name__ == '__main__':
