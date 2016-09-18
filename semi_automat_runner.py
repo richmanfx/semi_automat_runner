@@ -25,7 +25,7 @@ def main():
     # print(xml_tree_dict['online_settings'].getroot())
 
     # Тип сервера - Продакшн или Тестовый
-    print('The ' + functions.get_server_role(ini_config, ini_config_name) + ' server is used.')
+    print("The '" + functions.get_server_role(ini_config, ini_config_name) + "' server is used.")
 
     print('BEGIN: ' + functions.current_time())
 
