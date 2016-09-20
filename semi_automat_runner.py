@@ -25,9 +25,10 @@ def main():
     # print(xml_tree_dict['online_settings'].getroot())
 
     # Тип сервера - Продакшн или Тестовый
-    print("The '" + functions.get_server_role(ini_config, ini_config_name) + "' server is used.")
+    server_type = functions.get_server_role(ini_config, ini_config_name)
+    print("The '" + server_type + "' server is used.")
 
-    print('BEGIN: ' + functions.current_time())
+    print('Start work: ' + functions.current_time())
 
     # Получаем webdriver с браузером, указанным в INI-файле
     driver = functions.get_webdriver(ini_config, ini_config_name)
@@ -40,23 +41,43 @@ def main():
     # Открываем страницу
     link = functions.get_xml_value(xml_tree_dict['test_script'], 'serviceDirectLink')
     domain_name = link.split("//")[1].split("/")[0]
-
-    print('Open the page: ' + domain_name)
+    print("Open the page: '" + domain_name + "'")
     driver.get(link)
 
     # Доступен ли сайт
-    print('Test availability of the website: ' + domain_name)
+    print("Test availability of the website: '" + domain_name + "'")
     status = functions.site_available(driver, u'муниципальные услуги')
     if status:
-        print('The website ' + domain_name + ' is available.')
+        print("The website '" + domain_name + "' is available.")
     else:
-        print('The website ' + domain_name + ' is not available.')
+        print("The website '" + domain_name + "' is not available.")
         driver.quit()
         exit(1)
 
-    functions.console_input()   # Continue?
+    # functions.console_input()   # Continue?
 
-    print('END:  ' + functions.current_time())
+    # ##################################################################
+    # Авторизация
+    print('Start authorization.')
+    user_name = ''
+    if server_type == 'test':
+        user_name = 'userNameTest'
+        user_password = 'userPasswordTest'
+    elif server_type == 'prod':
+        user_name = 'userName'
+        user_password = 'userPassword'
+    xml_user_name = functions.get_xml_value(xml_tree_dict['testProperties_online'], user_name)
+    xml_user_password = functions.get_xml_value(xml_tree_dict['testProperties_online'], user_password)
+    status = functions.authorization(driver, xml_user_name, xml_user_password)
+    if status:
+        print('Authorization is successful.')
+    else:
+        print('Authorization failed.')
+
+    functions.console_input()  # Continue?
+
+    # ##################################################################
+    print('End work:  ' + functions.current_time())
     driver.quit()
 
 

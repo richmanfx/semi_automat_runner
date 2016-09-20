@@ -87,7 +87,7 @@ def get_webdriver(ini_config, ini_config_name):
     else:
         print('In config file ' + ini_config_name + ' not specified the browser.')
         exit(1)
-    print('Use the browser: ' + ini_config['browser']['browser_name'])
+    print("Use '" + ini_config['browser']['browser_name'] + "'")
 
     driver2 = set_browser_size(driver, ini_config)  # Размеры окна браузера
 
@@ -179,3 +179,39 @@ def console_input():
 def current_time():
     """ Return a formatted current date and time with time zone. """
     return timezone('Europe/Moscow').fromutc(datetime.utcnow()).strftime("%Y-%m-%d %H:%M:%S %Z")
+
+
+# Авторизация ЕСИА, возврат результата в boolean
+def authorization(driver, user_name, user_password):
+    """ ESIA authorization, returning the result as boolean """
+    # Переход в Личный кабинет
+    personal_office_element = driver.find_element_by_xpath(
+        "//a[@href='lk/main/login/entry.htm']/span[text()='Личный кабинет']")
+    personal_office_element.click()
+
+    # Кнопка 'Авторизация по ЕСИА'
+    esia_authorization_button = driver.find_element_by_xpath(
+        "//a[@href='saml/login' and text()='Авторизация по ЕСИА']")
+    esia_authorization_button.click()
+
+    # Сысылка "СНИЛС"
+    snils_link_element = driver.find_element_by_xpath(
+        "//*[@id='authnFrm']/*/a[@data-bind='visible: snils.canSwitchTo, click: toSnils']")
+    snils_link_element.click()
+
+    # Логинимся
+    username_field = driver.find_element_by_xpath('.//*[@id="snils"]')
+    username_field.send_keys(user_name)
+
+    password_field = driver.find_element_by_xpath('.//*[@id="password"]')
+    password_field.send_keys(user_password)
+
+    print(user_password)
+
+    driver.find_element_by_xpath('.//*[@data-bind="click: loginByPwd"]').click()
+
+
+''' password_field = driver.find_element_by_xpath('.//*[@id="inputPassword"]')
+    password_field.send_keys(get_test_script_cfg.user_pswd)
+    driver.find_element_by_xpath('.//*[@id="doLogin"]').click()
+'''
